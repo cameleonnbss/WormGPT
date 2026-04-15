@@ -422,32 +422,15 @@ def main_menu():
 if __name__ == "__main__":
     try:
         main_menu()
+
     except KeyboardInterrupt:
         print(f"\n{C.DIM}Goodbye.{C.RESET}")
         sys.exit(0)
+
     except Exception as e:
         print(f"\n{C.RED}[FATAL ERROR] {e}{C.RESET}")
         print(f"{C.DIM}Required packages: pip install requests pyfiglet colorama{C.RESET}")
         sys.exit(1)
-        time.sleep(0.08)
-        i += 1
-        if not getattr(spinner, "running", True):
-            break
-    sys.stdout.write("\r" + " " * 30 + "\r")
-
-def box(lines, color=C.CYAN, width=46):
-    top = f"{color}╔{'═'*width}╗{C.RESET}"
-    bottom = f"{color}╚{'═'*width}╝{C.RESET}"
-    print(top)
-    for line in lines:
-        visible_len = len(line.encode('utf-8')) - line.count('\033[') * 4
-        pad = width - visible_len - 2
-        print(f"{color}║{C.RESET} {line}{' ' * max(0, pad)}{color}║{C.RESET}")
-    print(bottom)
-
-def sep(char="─", width=48, color=C.CYAN):
-    print(f"{color}{char * width}{C.RESET}")
-
 # ── Config I/O ──────────────────────────────────────────────────────────────
 def load_config():
     default = {"api_key": "", "model": MODELS["1"]["name"], "history": []}
