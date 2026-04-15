@@ -743,34 +743,7 @@ def main_menu():
             print(f"\n{C.DIM}Goodbye.{C.RESET}\n")
             sys.exit(0)
 
-# ── Entry Point ─────────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    try:
-        main_menu()
-    except KeyboardInterrupt:
-        print(f"\n{C.DIM}Goodbye.{C.RESET}")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n{C.RED}[FATAL ERROR] {e}{C.RESET}")
-        print(f"{C.DIM}Required packages: pip install requests pyfiglet colorama{C.RESET}")
-        sys.exit(1)        try:
-            choice = input(f"{C.BRED}> {C.RESET}").strip()
-            if   choice == "1": chat_loop()
-            elif choice == "2": model_menu()
-            elif choice == "3": api_key_setup()
-            elif choice == "4": prompt_editor()
-            elif choice == "5":
-                print(f"\n{C.DIM}Bye.{C.RESET}\n")
-                sys.exit(0)
-            else:
-                print(f"{C.RED}1-5 only{C.RESET}")
-                time.sleep(0.7)
-
-        except KeyboardInterrupt:
-            print(f"\n{C.DIM}Bye.{C.RESET}\n")
-            sys.exit(0)
-
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Entry point ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     try:
         main_menu()
@@ -778,6 +751,6 @@ if __name__ == "__main__":
         print(f"\n{C.DIM}Bye.{C.RESET}")
         sys.exit(0)
     except Exception as e:
-        print(f"\033[0;31m[FATAL] {e}\033[0m")
-        print("\033[2mInstall deps: pip install requests pyfiglet colorama\033[0m")
+        print(f"{C.RED}[FATAL] {e}{C.RESET}")
+        print(f"{C.DIM}Install deps: pip install requests pyfiglet colorama{C.RESET}")
         sys.exit(1)
