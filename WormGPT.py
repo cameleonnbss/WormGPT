@@ -45,7 +45,7 @@ CONFIG_FILE = "wormgpt_config.json"
 PROMPT_FILE = "system-prompt.txt"
 DEFAULT_API_KEY = ""
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
+DEFAULT_MODEL = "deepseek/deepseek-chat:free"
 SITE_URL = "https://github.com/cameleonnbss/WormGPT"
 SITE_NAME = "WormGPT CLI by camzzz"
 SUPPORTED_LANGUAGES = ["Français", "English", "Espagnol", "Arabe", "Thaï", "Portugais"]
@@ -107,6 +107,280 @@ def typing_print(text, delay=0.02):
         sys.stdout.write(char)
         sys.stdout.flush()
         time.sleep(delay)
+    print()
+
+def select_language():
+    config = load_config()
+    clear_screen()
+    banner()
+    
+    print(f"{colors.bright_cyan}[ Sélection Langue ]{colors.reset}")
+    print(f"{colors.yellow}Actuelle: {colors.green}{config['language']}{colors.reset}")
+    
+    for idx, lang in enumerate(SUPPORTED_LANGUAGES, 1):
+        print(f"{colors.green}{idx}. {lang}{colors.reset}")
+    
+    while True:
+        try:
+            choice = int(input(f"\n{colors.red}[>] Choisir (1-{len(SUPPORTED_LANGUAGES)}): {colors.reset}"))
+            if 1 <= choice <= len(SUPPORTED_LANGUAGES):
+                config["language"] = SUPPORTED_LANGUAGES[choice-1]
+                save_config(config)
+                print(f"{colors.bright_cyan}Langue: {SUPPORTED_LANGUAGES[choice-1]}{colors.reset}")
+                time.sleep(1)
+                return
+            print(f"{colors.red}Choix invalide !{colors.reset}")
+        except ValueError:
+            print(f"{colors.red}Entrez un numéro !{colors.reset}")
+
+def select_model():
+    config = load_config()
+    clear_screen()
+    banner()
+    
+    print(f"{colors.bright_cyan}[ Configuration Modèle ]{colors.reset}")
+    print(f"{colors.yellow}Actuel: {colors.green}{config['model']}{colors.reset}")
+    print(f"\n{colors.yellow}Modèles FREE 2024:{colors.reset}")
+    print(f"{colors.green}1. deepseek/deepseek-chat:free")
+    print(f"{colors.green}2. deepseek/deepseek-r1:free") 
+    print(f"{colors.green}3. qwen/qwen2.5-coder-1.5b-instruct:free")
+    print(f"{colors.yellow}4. Model ID custom{colors.reset}")
+    print(f"{colors.yellow}5. Retour menu{colors.reset}")
+    
+    while True:
+        choice = input(f"\n{colors.red}[>] Choisir (1-5): {colors.reset}")
+        if choice == "1":
+            config["model"] = "deepseek/deepseek-chat:free"
+            save_config(config)
+            print(f"{colors.bright_cyan}deepseek-chat:free activé ! ✅{colors.reset}")
+            time.sleep(1)
+            return
+        elif choice == "2":
+            config["model"] = "deepseek/deepseek-r1:free"
+            save_config(config)
+            print(f"{colors.bright_cyan}deepseek-r1:free activé ! ✅{colors.reset}")
+            time.sleep(1)
+            return
+        elif choice == "3":
+            config["model"] = "qwen/qwen2.5-coder-1.5b-instruct:free"
+            save_config(config)
+            print(f"{colors.bright_cyan}qwen2.5-coder:free activé ! ✅{colors.reset}")
+            time.sleep(1)
+            return
+        elif choice == "4":
+            new_model = input(f"{colors.red}Model ID: {colors.reset}")
+            if new_model.strip():
+                config["model"] = new_model.strip()
+                save_config(config)
+                print(f"{colors.bright_cyan}Modèle mis à jour !{colors.reset}")
+                time.sleep(1)
+                return
+        elif choice == "5":
+            return
+        else:
+            print(f"{colors.red}Choix invalide !{colors.reset}")
+
+def set_api_key():
+    config = load_config()
+    clear_screen()
+    banner()
+    
+    print(f"{colors.bright_cyan}[ Clé API OpenRouter ]{colors.reset}")
+    print(f"{colors.yellow}Actuelle: {colors.green}{'*' * len(config['api_key']) if config['api_key'] else 'Non définie'}{colors.reset}")
+    print(f"{colors.cyan}Obtiens-la sur: openrouter.ai → Keys → Create Key{colors.reset}")
+    
+    new_key = input(f"\n{colors.red}Nouvelle clé API: {colors.reset}")
+    if new_key.strip():
+        config["api_key"] = new_key.strip()
+        save_config(config)
+        print(f"{colors.bright_cyan}🔑 Clé API sauvegardée ! ✅{colors.reset}")
+        time.sleep(1)
+
+def get_jailbreak_prompt():
+    if not os.path.exists(PROMPT_FILE):
+        with open(PROMPT_FILE, "w", encoding="utf-8") as f:
+            f.write(WORMGPT_PROMPT)
+        return WORMGPT_PROMPT
+    
+    try:
+        with open(PROMPT_FILE, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+            return content if content else WORMGPT_PROMPT
+    except:
+        return WORMGPT_PROMPT
+
+def call_api(user_input):
+    config = load_config()
+    
+    # MODÈLES FREE VALIDES 2024
+    free_models = [
+        "deepseek/deepseek-chat:free",
+        "deepseek/deepseek-r1:free",
+        "qwen/qwen2.5-coder-1.5b-instruct:free",
+        "deepseek/deepseek-chat-v3-0324:free"
+    ]
+    
+    if config['model'] not in free_models:
+        print(f"{colors.yellow}⚠️ Modèle invalide, passage auto à deepseek-chat:free{colors.reset}")
+        config['model'] = "deepseek/deepseek-chat:free"
+        save_config(config)
+    
+    # Auto-détection langue
+    try:
+        detected_lang = detect(user_input[:500])
+        lang_map = {'fr':'Français','en':'English','es':'Espagnol','ar':'Arabe','th':'Thaï','pt':'Portugais'}
+        detected = lang_map.get(detected_lang, 'Français')
+        if detected != config["language"]:
+            config["language"] = detected
+            save_config(config)
+    except:
+        pass
+    
+    headers = {
+        "Authorization": f"Bearer {config['api_key']}",
+        "HTTP-Referer": SITE_URL,
+        "X-Title": SITE_NAME,
+        "Content-Type": "application/json",
+        "User-Agent": "WormGPT-CLI/1.0"
+    }
+    
+    data = {
+        "model": config['model'],
+        "messages": [
+            {"role": "system", "content": get_jailbreak_prompt()[:4000]},  # Limite tokens
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.8
+    }
+    
+    try:
+        print(f"{colors.yellow}📡 Appel API: {config['model'][:30]}...{colors.reset}")
+        response = requests.post(
+            f"{config['base_url']}/chat/completions", 
+            headers=headers, 
+            json=data, 
+            timeout=20
+        )
+        
+        if response.status_code == 401:
+            return "[ERREUR] 🔑 Clé API invalide ! Va sur openrouter.ai → Keys"
+        elif response.status_code == 402:
+            return "[ERREUR] 💸 Crédits épuisés ! Ajoute du crédit gratuit sur OpenRouter"
+        elif response.status_code == 404:
+            return "[ERREUR] ❌ Modèle introuvable. Essaie: deepseek/deepseek-chat:free"
+        elif response.status_code == 429:
+            return "[ERREUR] ⏳ Rate limit ! Attends 30s ou change de modèle"
+        
+        response.raise_for_status()
+        return response.json()['choices'][0]['message']['content']
+        
+    except requests.exceptions.Timeout:
+        return "[ERREUR] ⏱️ Timeout. Réessaie ou change de modèle."
+    except Exception as e:
+        return f"[ERREUR] 💥 {str(e)[:100]}\nVérifie ta clé API et connexion !"
+
+def chat_session():
+    config = load_config()
+    clear_screen()
+    banner()
+    
+    print(f"{colors.bright_cyan}[ Session Chat WormGPT ]{colors.reset}")
+    print(f"{colors.yellow}🤖 Modèle: {colors.green}{config['model']}{colors.reset}")
+    print(f"{colors.yellow}'menu' = retour | 'exit' = quitter | 'clear' = effacer{colors.reset}\n")
+    
+    while True:
+        try:
+            user_input = input(f"\n{colors.bright_red}[WormGPT]~[#]> {colors.reset}")
+            
+            if not user_input.strip():
+                continue
+                
+            if user_input.lower() == "exit":
+                print(f"{colors.bright_cyan}À bientôt putain ! 😈{colors.reset}")
+                sys.exit(0)
+            elif user_input.lower() == "menu":
+                return
+            elif user_input.lower() == "clear":
+                clear_screen()
+                banner()
+                print(f"{colors.bright_cyan}[ Session Chat WormGPT ]{colors.reset}\n")
+                continue
+            
+            print(f"{colors.bright_yellow}[🤖 IA réfléchit]{colors.reset}")
+            response = call_api(user_input)
+            
+            if "[ERREUR]" in response:
+                print(f"{colors.bright_red}{response}{colors.reset}")
+            else:
+                print(f"\n{colors.bright_cyan}[WormGPT]{colors.reset}")
+                print(f"{colors.white}", end="")
+                typing_print(response)
+            
+        except KeyboardInterrupt:
+            print(f"\n{colors.red}[⏹️ Interrompu] Retour menu.{colors.reset}")
+            return
+
+def main_menu():
+    while True:
+        config = load_config()
+        clear_screen()
+        banner()
+        
+        print(f"{colors.bright_cyan}╔══════════════════════════════════════╗{colors.reset}")
+        print(f"{colors.bright_cyan}║           {colors.bright_red}WORMGPT{colors.bright_cyan} MENU          ║{colors.reset}")
+        print(f"{colors.bright_cyan}╠══════════════════════════════════════╣{colors.reset}")
+        print(f"{colors.yellow}1. 🌐 Langue: {colors.green}{config['language']}{colors.reset}")
+        print(f"{colors.yellow}2. 🤖 Modèle: {colors.green}{config['model'][:30]}...{colors.reset}")
+        print(f"{colors.yellow}3. 🔑 Clé API OpenRouter{colors.reset}")
+        print(f"{colors.yellow}4. 💬 Démarrer Chat{colors.reset}")
+        print(f"{colors.yellow}5. ❌ Quitter{colors.reset}")
+        print(f"{colors.bright_cyan}╚══════════════════════════════════════╝{colors.reset}")
+        
+        try:
+            choice = input(f"\n{colors.bright_red}[>] {colors.reset}")
+            
+            if choice == "1":
+                select_language()
+            elif choice == "2":
+                select_model()
+            elif choice == "3":
+                set_api_key()
+            elif choice == "4":
+                chat_session()
+            elif choice == "5":
+                print(f"{colors.bright_cyan}👋 Bye motherfucker ! 😈{colors.reset}")
+                sys.exit(0)
+            else:
+                print(f"{colors.red}❌ Choix invalide ! 1-5 seulement.{colors.reset}")
+                time.sleep(1)
+                
+        except KeyboardInterrupt:
+            print(f"\n{colors.red}👋 Au revoir !{colors.reset}")
+            sys.exit(1)
+
+def main():
+    # Auto-install requests si manquant
+    try:
+        import requests
+    except ImportError:
+        print(f"{colors.yellow}Installation requests...{colors.reset}")
+        os.system("pip install requests --quiet")
+    
+    # Créer config si absent
+    if not os.path.exists(CONFIG_FILE):
+        save_config(load_config())
+    
+    try:
+        main_menu()
+    except KeyboardInterrupt:
+        print(f"\n{colors.red}Interrompu ! Bye.{colors.reset}")
+    except Exception as e:
+        print(f"\n{colors.red}💥 Erreur fatale: {e}{colors.reset}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
     print()
 
 def select_language():
