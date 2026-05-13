@@ -1,6 +1,3 @@
-Voici le **README.md** mis à jour en **anglais** pour le nouveau fichier `WormGPTV2.py` :
-
-```markdown
 # 🛠️ WormGPT CLI · v2.0
 
 > Unrestricted AI Chatbot CLI — OpenRouter API, custom models, jailbreak prompts. Works on Linux, Termux & Windows.
